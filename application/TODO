@@ -1,0 +1,22 @@
+docker build -t sardor1337/weather-app:latest .
+docker push sardor1337/weather-app:latest
+
+kubectl create secret docker-registry namespace-secret \
+--docker-server=docker.io \
+--docker-username=sardor1337 \
+--docker-password=Sardor2005$ \
+--docker-email=uzblordsardorboy0705@gmail.com \
+--namespace=secure-ns
+
+kubectl apply -f serviceAccount.yaml
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+kubectl get svc -n secure-ns
+
+docker image inspect sardor1337/weather-app:latest
+cat /etc/passwd
+Username: sardor
+UID: 1000
+GID: 1000
+Home: /home/sardor
+Shell: /bin/bash

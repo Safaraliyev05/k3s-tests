@@ -1,0 +1,29 @@
+{
+  "spec": {
+    "containers": [
+      {
+        "name": "init-nfs",
+        "image": "busybox",
+        "command": [
+          "sh",
+          "-c",
+          "echo '<h1>NFS Shared Storage</h1><p>Deployed: '$(date)'</p>' > /mnt/index.html"
+        ],
+        "volumeMounts": [
+          {
+            "mountPath": "/mnt",
+            "name": "nfs-storage"
+          }
+        ]
+      }
+    ],
+    "volumes": [
+      {
+        "name": "nfs-storage",
+        "persistentVolumeClaim": {
+          "claimName": "nfs-pvc"
+        }
+      }
+    ]
+  }
+}

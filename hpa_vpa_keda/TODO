@@ -1,0 +1,5 @@
+docker run -d -p 5000:5000 -v $(pwd)/data:/opt/data myflaskapp
+docker build -t sardor1337/flaskapp:latest .
+docker push sardor1337/flaskapp:latest
+
+kubectl get hpa

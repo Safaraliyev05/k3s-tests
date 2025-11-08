@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-app-deployment
+  namespace: secure-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: weather-app
+  template:
+    metadata:
+      labels:
+        app: weather-app
+    spec:
+      serviceAccountName: weather-app-sa
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 3000
+        fsGroup: 3000
+        runAsNonRoot: true
+      containers:
+        - name: weather-app
+          image: sardor1337/weather-app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "echo 'Container started at $(date)' >> /app/container.log"]
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "nginx -s quit; while killall -0 nginx; do sleep 1; done"]
+            stopSignal: SIGINT
+      imagePullSecrets:
+        - name: namespace-secret

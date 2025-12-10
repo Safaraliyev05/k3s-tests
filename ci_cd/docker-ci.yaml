@@ -1,0 +1,78 @@
+name: Flask CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run basic server test
+        run: python -m py_compile app.py
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-app:${{ github.sha }} .
+
+      - name: Push to DockerHub
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:${{ github.sha }}
+
+  trivy-scan:
+    runs-on: ubuntu-latest
+    needs: build-test-push   # waits for build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Pull image from Docker Hub
+        run: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/flask-app:${{ github.sha }}
+          docker tag ${{ secrets.DOCKER_USERNAME }}/flask-app:${{ github.sha }} myapp:${{ github.sha }}
+
+      - name: Trivy Scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: 'image'
+          image-ref: 'myapp:${{ github.sha }}'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          format: 'table'
+
+      - name: Save SARIF report
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: 'image'
+          image-ref: 'myapp:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif

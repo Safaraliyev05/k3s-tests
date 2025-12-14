@@ -1,0 +1,16 @@
+replicaCount: 1
+
+image:
+  repository: flask-app
+  tag: "1.0"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 6060
+
+serviceAccount:
+  create: false
+
+ingress:
+  enabled: false
